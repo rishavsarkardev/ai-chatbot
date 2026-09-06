@@ -30,7 +30,7 @@ A full-stack, state-of-the-art AI chatbot application leveraging the advanced re
 ## 📸 Interface Preview
 
 <div align="center">
-  <img src="[https://placehold.co/800x450/2d2d2d/ffffff?text=Chat+Interface+Screenshot](https://ibb.co/s9sygJwj)" alt="Chat UI" width="80%" />
+  <img src="https://i.ibb.co/hF2Dg1Ws/image.png" alt="Chat UI" width="80%" />
   <p><i>Clean, responsive React UI with markdown support and inline image rendering.</i></p>
 </div>
 
