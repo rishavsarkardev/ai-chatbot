@@ -41,7 +41,7 @@ A full-stack, state-of-the-art AI chatbot application leveraging the advanced re
 ### **Frontend**
 * **React.js** - UI components and state management
 * **Tailwind CSS** - Modern, responsive styling
-* **Axios** - API communication
+* **Fetch** - API communication
 
 ### **Backend**
 * **Python 3.10+** - Core backend logic
