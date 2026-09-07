@@ -56,5 +56,5 @@ A full-stack, state-of-the-art AI chatbot application leveraging the advanced re
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/yourusername/astrachat.git](https://github.com/yourusername/astrachat.git)
-cd astrachat
+git clone https://github.com/rishavsarkardev/ai-chatbot.git
+cd ai-chatbot
