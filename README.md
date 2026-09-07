@@ -24,6 +24,7 @@ A full-stack, state-of-the-art AI chatbot application leveraging the advanced re
 - **📄 Document Analysis (RAG):** Upload PDFs or text files and instantly chat with your data using an integrated Retrieval-Augmented Generation pipeline.
 - **📂 Workspace Management:** Create, manage, and switch between multiple independent chat sessions effortlessly.
 - **🧠 Auto-Titling:** Automatically generates concise, professional titles for new chats based on an intelligent summarization of your first prompt.
+- **🗑️ Create and Delete Chats:** Creation of new chats as well as deletion of any chats can take place.
 
 ---
 
