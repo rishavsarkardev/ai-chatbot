@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from prompt_handlers.text_handler import generate_response
+from prompt_handlers.text_handler import generate_response, generate_text_summary
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -21,6 +21,7 @@ logger = logging.getLogger("uvicorn")
 Base.metadata.create_all(bind=engine)
 with engine.begin() as connection:
     connection.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS chat_id INTEGER"))
+    connection.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS chat_title VARCHAR(255)"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,22 +54,21 @@ def create_account(user: User, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    db.add(database_models.Message(user_id=db_user.id, content="New chat created", role="system", chat_id=1))
+    db.add(database_models.Message(user_id=db_user.id, content="You are a helpful assistant", role="system", chat_id=1, chat_title="New chat"))
     db.commit()
     return {"message": "Account created successfully", "user_id": db_user.id}
 
 
 @app.post("/newchat")
 def new_chat(user_id: int, db: Session = Depends(get_db)):
-    decoded_user_id = urllib.parse.unquote(str(user_id))
     last_chat_id = db.query(database_models.Message).filter(
-        database_models.Message.user_id == decoded_user_id,
+        database_models.Message.user_id == user_id,
     ).order_by(database_models.Message.chat_id.desc()).first()
 
     if not last_chat_id or last_chat_id.chat_id is None: new_chat_id = 1
     else: new_chat_id = last_chat_id.chat_id + 1
 
-    db.add(database_models.Message(user_id=decoded_user_id, content="New chat created", role="system", chat_id=new_chat_id))
+    db.add(database_models.Message(user_id=user_id, content="You are a helpful assistant", role="system", chat_id=new_chat_id, chat_title=f"New chat"))
     db.commit()
 
     return {"message": "New chat created successfully", "chat_id": urllib.parse.quote(str(new_chat_id))}
@@ -77,14 +77,12 @@ def new_chat(user_id: int, db: Session = Depends(get_db)):
 # Fetches messages for a specific user and chat_id, decoding the parameters to ensure proper handling of special characters.
 @app.get("/messages")
 def get_messages(user_id: int, chat_id: int, db: Session = Depends(get_db)):
-    decoded_user_id = urllib.parse.unquote(str(user_id))
-    decoded_chat_id = urllib.parse.unquote(str(chat_id))
     messages = db.query(database_models.Message).filter(
-        database_models.Message.user_id == decoded_user_id,
-        database_models.Message.chat_id == decoded_chat_id
-    ).all()[::-1]
-    return messages
+        database_models.Message.user_id == user_id,
+        database_models.Message.chat_id == chat_id
+    ).all()
 
+    return messages
 
 @app.post("/")
 def read_root(request: Message, db: Session = Depends(get_db)):
@@ -106,13 +104,20 @@ def read_root(request: Message, db: Session = Depends(get_db)):
 
     response = generate_response(request.content, chat_history)
     
-    
+    generated_summary =  "New chat"
+
+    if len(chat_history) == 1:
+        generated_summary = generate_text_summary(request.content)
+    elif len(chat_history) > 1:
+        generated_summary = messages[-1].chat_title
+
     # Save the user's message
     db.add(database_models.Message(
         user_id=request.user_id, 
         content=request.content, 
         role='user', 
-        chat_id=request.chat_id
+        chat_id=request.chat_id,
+        chat_title=generated_summary
     ))
     
     # Save the assistant's message
@@ -120,13 +125,25 @@ def read_root(request: Message, db: Session = Depends(get_db)):
         user_id=request.user_id, 
         role="assistant", 
         content=response, 
-        chat_id=request.chat_id
+        chat_id=request.chat_id,
+        chat_title=generated_summary
     ))
     
     db.commit()
+
     
     # Fetch and return the messages
     return db.query(database_models.Message).filter(
         database_models.Message.user_id == request.user_id, 
         database_models.Message.chat_id == request.chat_id
     ).all()[::-1]
+
+
+@app.delete("/delete_chat")
+def delete_chat(user_id: int, chat_id: int, db: Session = Depends(get_db)):
+    db.query(database_models.Message).filter(
+        database_models.Message.user_id == user_id,
+        database_models.Message.chat_id == chat_id
+    ).delete()
+    db.commit()
+    return {"message": "Chat deleted successfully"}

@@ -9,4 +9,5 @@ class Message(BaseModel):
     content: str
     role: str
     chat_id: int
+    chat_title: str
     

@@ -19,4 +19,5 @@ class Message(Base):
     role = Column(String)
     content = Column(String)
     chat_id = Column(Integer)
+    chat_title = Column(String)
 
